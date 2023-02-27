@@ -10,7 +10,7 @@ function createMockServer({ environment = 'development' } = {}) {
       this.post('/todos', (schema, request) => {
         const attrs = JSON.parse(request.requestBody);
 
-        if (attrs.title === 'Error') {
+        if (attrs.title.toLowerCase() === 'Error') {
           return new Response(400, {}, { errors: { title: 'Title cannot be "Error"' } });
         }
 

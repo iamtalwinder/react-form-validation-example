@@ -15,22 +15,61 @@ import {
   Typography,
 } from '@mui/material';
 
-// Yup validation schema
-const schema = yup.object({
+enum StatusEnum {
+  done = 'done',
+  todo = 'todo',
+  canceled = 'canceled'
+}
+
+type Todo = {
+  title: string;
+  description: string;
+  status: StatusEnum;
+  category: string;
+}
+
+const schema: yup.ObjectSchema<Todo> = yup.object({
   title: yup.string().min(3).max(20).required('Title is required'),
   description: yup.string().min(3).max(50).required('Description is required'),
-  status: yup.string().required('Status is required'),
+  status: yup.mixed<StatusEnum>().oneOf(Object.values(StatusEnum)).required(),
   category: yup.string().required('Category is required'),
 }).required();
 
 const TodoForm = () => {
-  const { control, handleSubmit, formState: { errors } } = useForm({
+  const { control, handleSubmit, formState: { errors }, setError, reset } = useForm({
     resolver: yupResolver(schema)
   });
 
-  const onSubmit = (data: any) => {
-    console.log(data);
-    // Submit logic here
+  const onSubmit = async (data: Todo) => {
+    try {
+      const response = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        // Iterate over the errors and set them on the respective fields
+        if (responseData.errors) {
+          Object.keys(responseData.errors).forEach((key) => {
+            setError(key as keyof Todo, {
+              type: "manual",
+              message: responseData.errors[key]
+            });
+          });
+        }
+        throw new Error('Failed to create todo');
+      }
+
+      // Handle successful todo creation here
+      alert('Todo created successfully');
+      reset();
+    } catch (error: any) {
+      // Show a general error message or handle it as needed
+      alert(error.message);
+    }
   };
 
   return (
@@ -54,12 +93,12 @@ const TodoForm = () => {
           <Controller
             name="status"
             control={control}
-            defaultValue="todo"
+            defaultValue={StatusEnum.todo}
             render={({ field }) => (
               <RadioGroup {...field} row>
-                <FormControlLabel value="done" control={<Radio />} label="Done" />
-                <FormControlLabel value="todo" control={<Radio />} label="Todo" />
-                <FormControlLabel value="canceled" control={<Radio />} label="Canceled" />
+                <FormControlLabel value={StatusEnum.done} control={<Radio />} label="Done" />
+                <FormControlLabel value={StatusEnum.todo} control={<Radio />} label="Todo" />
+                <FormControlLabel value={StatusEnum.canceled} control={<Radio />} label="Canceled" />
               </RadioGroup>
             )}
           />
