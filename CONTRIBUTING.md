@@ -53,7 +53,7 @@ git push origin new-branch
 
 ```
 
-git remote add upstream https://github.com/iamtalwinder/json-server-mock-api.git
+git remote add upstream https://github.com/iamtalwinder/react-form-validation-example.git
 
 ```
 
